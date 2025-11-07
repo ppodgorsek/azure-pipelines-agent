@@ -1,0 +1,48 @@
+name: Azure Pipelines agent in Docker
+
+on:
+  push:
+    # Publish `master` as Docker `latest` image.
+    # Release branches will trigger the creation of a git tag if the build is successful
+    branches:
+      - master
+      - release/*
+
+  # Run tests for any PRs.
+  pull_request:
+
+env:
+  # The image name
+  IMAGE_NAME: docker.io/ppodgorsek/azure-pipelines-agent
+  IMAGE_VERSION_CI: ci
+
+jobs:
+  # Build and run tests.
+  # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  build:
+    runs-on: ubuntu-latest
+    # run all our tests on each browser
+    strategy:
+      matrix:
+        include:
+          # Below are the platforms supported by the official Azure Pipelines Agent
+          # See https://github.com/microsoft/azure-pipelines-agent/releases
+          # - platform: "win-x64"
+          # - platform: "win-x86" (Docker in Docker not supported)
+          # - platform: "osx-x64"
+          # - platform: "osx-arm64"
+          - platform: "linux-x64"
+          # - platform: "linux-arm"
+          # - platform: "linux-arm64"
+          # - platform: "linux-musl-x64"
+          # - platform: "linux-musl-arm64"
+    env:
+      AGENT_PLATFORM: ${{ matrix.platform }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Build image
+        run: |
+          podman build . \
+            --tag $IMAGE_NAME:$IMAGE_VERSION_CI \
+            --file Containerfile
