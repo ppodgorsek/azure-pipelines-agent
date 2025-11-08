@@ -7,6 +7,8 @@
 * [Running the container](#running-the-container)
     * [Changing the name of the agent pool](#changing-agent-pool-name)
     * [Overriding the agent name](#overriding-agent-name)
+* [Running the image on different platforms](#platforms)
+    * [Azure Container Apps](#platform-azure-container-apps)
 * [Please contribute!](#please-contribute)
 
 -----
@@ -23,7 +25,7 @@ This image allows to run Docker-in-Docker and also contains:
 * Java 21
 * make
 * Maven
-* Python 3.9
+* Python 3
 * Rust
 
 <a name="versioning"></a>
@@ -82,6 +84,23 @@ docker run --rm \
     -e AZURE_DEVOPS_TOKEN="CHANGEME" \
     -e AZURE_DEVOPS_URL="CHANGEME" \
     docker.io/ppodgorsek/azure-pipelines-agent:<version>
+```
+
+<a name="platforms"></a>
+
+## Running the image on different platforms
+
+<a name="platform-azure-container-apps"></a>
+
+### Azure Container Apps
+
+The easiest way to run the agent in Azure is via an Azure Container App Job.
+
+Such jobs can scale up and down according to various metrics and, luckily, one of those metrics is the number of pending jobs in Azure Pipelines.
+
+The Terraform configuration will therefore look as follows:
+```yml
+
 ```
 
 <a name="please-contribute"></a>
