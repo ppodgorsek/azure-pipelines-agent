@@ -71,5 +71,5 @@ jobs:
         with:
           file: "{context}/Containerfile"
           platforms: ${{ matrix.docker_platform }}
-          push: github.event_name != 'pull_request'
+          push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_type == 'branch' && 'latest' || github.ref_name }}
