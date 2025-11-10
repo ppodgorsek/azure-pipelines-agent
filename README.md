@@ -98,11 +98,6 @@ The easiest way to run the agent in Azure is via an Azure Container App Job.
 
 Such jobs can scale up and down according to various metrics and, luckily, one of those metrics is the number of pending jobs in Azure Pipelines.
 
-The Terraform configuration will therefore look as follows:
-```yml
-
-```
-
 <a name="please-contribute"></a>
 
 ## Please contribute!
