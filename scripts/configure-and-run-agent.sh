@@ -10,11 +10,12 @@ else
 fi
 
 ${AGENT_WORK_DIR}/config.sh \
+    --unattended \
     --replace \
     --work _work \
     --acceptTeeEula \
     --url "${AZURE_DEVOPS_URL}" \
-    --auth pat \
+    --auth PAT \
     --token "${AZURE_DEVOPS_TOKEN}" \
     --agent "${AGENT_NAME}" \
     --pool "${AZURE_DEVOPS_AGENT_POOL}"
