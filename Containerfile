@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with git, Java, Maven, .Net and Podman (Docker) enabled."
+LABEL description="An agent for Azure Pipelines, with git, Java, Maven, .Net, Podman (Docker) and Python 3 enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -77,4 +77,4 @@ RUN chown ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR}/configure-and-
 
 USER ${AGENT_USER_NAME}
 
-ENTRYPOINT [ "${AGENT_WORK_DIR}/configure-and-run-agent.sh" ]
+ENTRYPOINT [ "configure-and-run-agent.sh" ]
