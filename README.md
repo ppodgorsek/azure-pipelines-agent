@@ -20,7 +20,7 @@
 
 This project consists of a container image containing an Azure Pipelines agent installation.
 
-This image allows to run Docker-in-Docker and also contains:
+This image allows to run Podman-in-Docker and also contains:
 * gcc
 * git
 * Java 21
@@ -29,14 +29,16 @@ This image allows to run Docker-in-Docker and also contains:
 * Python 3
 * Rust
 
+Running Podman inside a container is based on RedHat's [excellent article](https://www.redhat.com/en/blog/podman-inside-container), the official [Podman tutorial for rootless executions](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md) and [Podman's official container image](https://quay.io/repository/podman/stable?tab=info).
+
 <a name="versioning"></a>
 
 ## Versioning
 
-The versioning of this image follows the one of the official Docker-in-Docker image:
+The versioning of this image follows the one of the official Azure Pipelines agent:
 
-* Major version matches the one of Docker-in-Docker
-* Minor and patch versions are specific to this project (allows to update the versions of the other dependencies)
+* Major, minor and patch versions match the one of the Azure Pipelines agent
+* Build version is specific to this project (allows to update the versions of the other dependencies)
 
 <a name="running-the-container"></a>
 
