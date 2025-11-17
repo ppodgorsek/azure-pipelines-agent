@@ -77,4 +77,4 @@ RUN chown ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR}/configure-and-
 
 USER ${AGENT_USER_NAME}
 
-ENTRYPOINT [ "configure-and-run-agent.sh" ]
+ENTRYPOINT [ "./configure-and-run-agent.sh" ]
