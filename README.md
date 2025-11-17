@@ -26,6 +26,7 @@ This image allows to run Podman-in-Docker and also contains:
 * Java 21
 * make
 * Maven
+* .Net 10
 * Python 3
 * Rust
 

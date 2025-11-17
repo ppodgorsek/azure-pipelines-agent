@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with git, Java, Maven and Podman (Docker) enabled."
+LABEL description="An agent for Azure Pipelines, with git, Java, Maven, .Net and Podman (Docker) enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -11,10 +11,12 @@ ENV AZURE_DEVOPS_AGENT_POOL="Default"
 ENV AZURE_DEVOPS_AGENT_NAME=""
 ENV AZURE_DEVOPS_AGENT_VERSION="4.264.2"
 
+ENV DOTNET_VERSION="10.0"
 ENV JAVA_VERSION="21"
 
 # Agent capabilities
 ENV docker="enabled"
+ENV dotnet="enabled"
 ENV git="enabled"
 ENV java="enabled"
 ENV maven="enabled"
@@ -27,6 +29,7 @@ RUN dnf upgrade -y > /dev/null \
     # Install dependencies for cryptography due to https://github.com/pyca/cryptography/issues/5771
     cargo \
     curl \
+    dotnet-sdk-${DOTNET_VERSION} \
     gcc \
     git \
     java-${JAVA_VERSION}-openjdk \
