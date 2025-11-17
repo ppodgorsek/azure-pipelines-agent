@@ -6,6 +6,7 @@
 * [Versioning](#versioning)
 * [Running the container](#running-the-container)
     * [Changing the name of the agent pool](#changing-agent-pool-name)
+    * [Initialising a self-hosted agent pool via the placeholder mode](#placeholder-mode)
     * [Overriding the agent name](#overriding-agent-name)
 * [Running the image on different platforms](#platforms)
     * [Azure Container Apps](#platform-azure-container-apps)
@@ -69,6 +70,30 @@ docker run --rm \
     -e AZURE_DEVOPS_URL="CHANGEME" \
     docker.io/ppodgorsek/azure-pipelines-agent:<version>
 ```
+
+<a name="placeholder-mode"></a>
+
+### Initialising a self-hosted agent pool using the placeholder mode
+
+In order to be used by pipelines, self-hosted agent pools must be initialised by running an agent at least once within them. This allows Azure Pipelines to determine the agent version, its capabilities and other metadata to allocate build jobs.
+
+After creating a new agent pool, the placeholder mode can be enabled using the `AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE` environment variable:
+
+```sh
+docker run --rm \
+    -e AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE="true" \
+    -e AZURE_DEVOPS_AGENT_POOL="Azure Container Apps" \
+    -e AZURE_DEVOPS_TOKEN="CHANGEME" \
+    -e AZURE_DEVOPS_URL="CHANGEME" \
+    docker.io/ppodgorsek/azure-pipelines-agent:<version>
+```
+
+Agents run using the placeholder mode will follow a very simple lifecycle:
+1. Configure the agent,
+2. Register the agent in the Azure DevOps pool,
+2. Terminate.
+
+**Such placeholder agents cannot process any build jobs, the environment variable should therefore only be used for the initial placeholder agent, not all agents.**
 
 <a name="overriding-agent-name"></a>
 

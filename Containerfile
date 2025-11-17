@@ -6,6 +6,7 @@ LABEL description="An agent for Azure Pipelines, with Docker-in-Docker, git, Jav
 ENV AGENT_USER_NAME="azure-pipeline-agent"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
 
+ENV AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE="false"
 ENV AZURE_DEVOPS_AGENT_POOL="Default"
 ENV AZURE_DEVOPS_AGENT_NAME=""
 ENV AZURE_DEVOPS_AGENT_VERSION="4.264.2"
@@ -59,4 +60,4 @@ RUN chown ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR}/configure-and-
 
 USER ${AGENT_USER_NAME}:${AGENT_USER_NAME}
 
-ENTRYPOINT ${AGENT_WORK_DIR}/configure-and-run-agent.sh
+ENTRYPOINT [ "${AGENT_WORK_DIR}/configure-and-run-agent.sh" ]
