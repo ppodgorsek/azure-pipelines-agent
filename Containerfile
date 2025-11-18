@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with Ansible, git, Java, Maven, .Net, Podman (Docker) + Buildah and Python 3 enabled."
+LABEL description="An agent for Azure Pipelines, with Ansible, git, Java, Maven, .Net, Podman (Docker) + Buildah, Python 3 and Terraform enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -16,6 +16,7 @@ ENV ANSIBLE_COLLECTION_AZURE_VERSION="v3.11.0"
 ENV ANSIBLE_COLLECTION_GCP_VERSION="v1.10.2"
 ENV DOTNET_VERSION="10.0"
 ENV JAVA_VERSION="21"
+ENV TERRAFORM_VERSION="1.13.5"
 
 # Agent capabilities
 ENV ansible="enabled"
@@ -24,6 +25,7 @@ ENV dotnet="enabled"
 ENV git="enabled"
 ENV java="enabled"
 ENV maven="enabled"
+ENV terraform="enabled"
 
 # Don't include container-selinux and remove directories used by DNF that are just taking up space.
 RUN dnf upgrade -y > /dev/null \
@@ -34,6 +36,7 @@ RUN dnf upgrade -y > /dev/null \
     # Install dependencies for cryptography due to https://github.com/pyca/cryptography/issues/5771
     cargo \
     curl \
+    dnf-plugins-core \
     dotnet-sdk-${DOTNET_VERSION} \
     gcc \
     gcc-c++ \
@@ -82,6 +85,12 @@ RUN pip3 install ansible-core --upgrade \
   && curl https://raw.githubusercontent.com/ansible-collections/azure/${ANSIBLE_COLLECTION_AZURE_VERSION}/requirements.txt | grep -ivE "azure-iot-hub|azure-mgmt-iothub" > azure-requirements.txt \
   && pip3 install -r azure-requirements.txt \
   && pip3 install -r https://raw.githubusercontent.com/ansible-collections/google.cloud/${ANSIBLE_COLLECTION_GCP_VERSION}/requirements.txt
+
+# Terraform
+# Official documentation: https://developer.hashicorp.com/terraform/install
+RUN dnf config-manager addrepo --from-repofile=https://rpm.releases.hashicorp.com/fedora/hashicorp.repo \
+  && dnf install -y terraform-${TERRAFORM_VERSION}* \
+  && dnf clean all
 
 USER ${AGENT_USER_NAME}
 
