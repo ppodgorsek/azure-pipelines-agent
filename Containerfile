@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with Ansible, git, Java, Maven, .Net, Podman (Docker) + Buildah, Python 3 and Terraform enabled."
+LABEL description="An agent for Azure Pipelines, with Ansible, git, Helm + kubectl, Java, Maven, .Net, Podman (Docker) + Buildah, Python 3 and Terraform enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -15,6 +15,7 @@ ENV ANSIBLE_COLLECTION_AWS_VERSION="10.1.2"
 ENV ANSIBLE_COLLECTION_AZURE_VERSION="v3.11.0"
 ENV ANSIBLE_COLLECTION_GCP_VERSION="v1.10.2"
 ENV DOTNET_VERSION="10.0"
+ENV HELM_VERSION="v3.19.0"
 ENV JAVA_VERSION="21"
 ENV TERRAFORM_VERSION="1.13.5"
 
@@ -23,6 +24,7 @@ ENV ansible="enabled"
 ENV docker="enabled"
 ENV dotnet="enabled"
 ENV git="enabled"
+ENV helm="enabled"
 ENV java="enabled"
 ENV maven="enabled"
 ENV terraform="enabled"
@@ -85,6 +87,17 @@ RUN pip3 install ansible-core --upgrade \
   && curl https://raw.githubusercontent.com/ansible-collections/azure/${ANSIBLE_COLLECTION_AZURE_VERSION}/requirements.txt | grep -ivE "azure-iot-hub|azure-mgmt-iothub" > azure-requirements.txt \
   && pip3 install -r azure-requirements.txt \
   && pip3 install -r https://raw.githubusercontent.com/ansible-collections/google.cloud/${ANSIBLE_COLLECTION_GCP_VERSION}/requirements.txt
+
+# Kubernetes & Helm
+COPY conf/kubernetes.repo /etc/yum.repos.d/kubernetes.repo
+RUN dnf install -y kubectl \
+  && dnf clean all \
+  && pip3 install kubernetes \
+  && curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/${HELM_VERSION}/scripts/get-helm-3 \
+  && chmod 700 get_helm.sh \
+  && ./get_helm.sh --version ${HELM_VERSION} \
+  && rm -f get_helm.sh \
+  && helm plugin install https://github.com/databus23/helm-diff
 
 # Terraform
 # Official documentation: https://developer.hashicorp.com/terraform/install

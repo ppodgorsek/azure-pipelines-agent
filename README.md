@@ -24,6 +24,7 @@ This image contains:
 * Ansible (with its major cloud collections)
 * gcc
 * git
+* Helm + kubectl
 * Java 21
 * make
 * Maven
