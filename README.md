@@ -30,6 +30,7 @@ This image contains:
 * Maven
 * .Net 10
 * Podman (with an alias for `docker`) + Buildah
+* PostgreSQL
 * Python 3
 * Rust
 * Terraform

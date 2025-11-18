@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with Ansible, git, Helm + kubectl, Java, Maven, .Net, Podman (Docker) + Buildah, Python 3 and Terraform enabled."
+LABEL description="An agent for Azure Pipelines, with Ansible, git, Helm + kubectl, Java, Maven, .Net, Podman (Docker) + Buildah, PostgreSQL, Python 3 and Terraform enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -17,6 +17,7 @@ ENV ANSIBLE_COLLECTION_GCP_VERSION="v1.10.2"
 ENV DOTNET_VERSION="10.0"
 ENV HELM_VERSION="v3.19.0"
 ENV JAVA_VERSION="21"
+ENV POSTGRESQL_VERSION="18"
 ENV TERRAFORM_VERSION="1.13.5"
 
 # Agent capabilities
@@ -27,6 +28,7 @@ ENV git="enabled"
 ENV helm="enabled"
 ENV java="enabled"
 ENV maven="enabled"
+ENV postgresql="enabled"
 ENV terraform="enabled"
 
 # Don't include container-selinux and remove directories used by DNF that are just taking up space.
@@ -98,6 +100,12 @@ RUN dnf install -y kubectl \
   && ./get_helm.sh --version ${HELM_VERSION} \
   && rm -f get_helm.sh \
   && helm plugin install https://github.com/databus23/helm-diff
+
+# PostgreSQL
+RUN dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/F-43-x86_64/pgdg-fedora-repo-latest.noarch.rpm \
+  && dnf install -y postgresql${POSTGRESQL_VERSION} \
+  && dnf clean all \
+  && pip3 install psycopg2-binary
 
 # Terraform
 # Official documentation: https://developer.hashicorp.com/terraform/install
