@@ -18,19 +18,27 @@
 
 ## What is it?
 
-This project consists of a container image containing an Azure Pipelines agent installation.
+This project consists of an Azure Pipelines agent container image, including several useful build and deployment tools.
 
-This image allows to run Podman-in-Docker and also contains:
+This image contains:
+* Ansible (with its major cloud collections)
 * gcc
 * git
 * Java 21
 * make
 * Maven
 * .Net 10
+* Podman (with an alias for `docker`) + Buildah
 * Python 3
 * Rust
 
 Running Podman inside a container is based on RedHat's [excellent article](https://www.redhat.com/en/blog/podman-inside-container), the official [Podman tutorial for rootless executions](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md) and [Podman's official container image](https://quay.io/repository/podman/stable?tab=info).
+
+> [!WARNING]  
+> As mentioned in those articles, running Podman-in-Docker or Docker-in-Docker won't be possible on platforms such as Azure Container Apps where a privileged execution isn't possible. It is however possible in Kubernetes or on machines where such privileged execution is allowed.
+
+> [!TIP]
+> On platforms where privileged execution is impossible, one option can be to split the build pipeline into multiple stages and to run any container build/run steps on a Microsoft-hosted agent while the rest of the pipeline runs on a self-hosted agent.
 
 <a name="versioning"></a>
 
@@ -80,7 +88,8 @@ docker run --rm \
 
 In order to be used by pipelines, self-hosted agent pools must be initialised by running an agent at least once within them. This allows Azure Pipelines to determine the agent version, its capabilities and other metadata to allocate build jobs.
 
-**Placeholders are only relevant when deploying the agent to services which don't have at least one continuously-running instance, such as Azure Container Apps.**
+> [!NOTE]  
+> Placeholders are only relevant when deploying the agent to services which don't have at least one continuously-running instance, such as Azure Container Apps.
 
 After creating a new agent pool, the placeholder mode can be enabled using the `AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE` environment variable:
 
@@ -98,7 +107,8 @@ Agents run using the placeholder mode will follow a very simple lifecycle:
 2. Register the agent in the Azure DevOps pool,
 2. Terminate.
 
-**Such placeholder agents cannot process any build jobs, the environment variable should therefore only be used for the initial placeholder agent, not all agents.**
+> [!IMPORTANT]  
+> Such placeholder agents cannot process any build jobs, the environment variable should therefore only be used for the initial placeholder agent, not all agents.
 
 <a name="overriding-agent-name"></a>
 
