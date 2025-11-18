@@ -36,7 +36,7 @@ Running Podman inside a container is based on RedHat's [excellent article](https
 
 ## Versioning
 
-The versioning of this image follows the one of the official Azure Pipelines agent:
+The versioning of this image follows the one of the [official Azure Pipelines agent](https://github.com/microsoft/azure-pipelines-agent):
 
 * Major, minor and patch versions match the one of the Azure Pipelines agent
 * Build version is specific to this project (allows to update the versions of the other dependencies)
@@ -79,6 +79,8 @@ docker run --rm \
 ### Initialising a self-hosted agent pool using the placeholder mode
 
 In order to be used by pipelines, self-hosted agent pools must be initialised by running an agent at least once within them. This allows Azure Pipelines to determine the agent version, its capabilities and other metadata to allocate build jobs.
+
+**Placeholders are only relevant when deploying the agent to services which don't have at least one continuously-running instance, such as Azure Container Apps.**
 
 After creating a new agent pool, the placeholder mode can be enabled using the `AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE` environment variable:
 
@@ -125,6 +127,162 @@ docker run --rm \
 The easiest way to run the agent in Azure is via an Azure Container App Job.
 
 Such jobs can scale up and down according to various metrics and, luckily, one of those metrics is the number of pending jobs in Azure Pipelines.
+
+The Terraform configuration will therefore look as follows:
+
+```tf
+# The placeholder job is used to initialise the agent pool
+resource "azurerm_container_app_job" "azure_pipelines_agent_placeholder" {
+  name                         = "${var.azure_devops_container_app_azure_pipelines_agent_name}-init"
+  location                     = azurerm_resource_group.azure_devops.location
+  resource_group_name          = azurerm_resource_group.azure_devops.name
+  container_app_environment_id = azurerm_container_app_environment.azure_devops.id
+
+  replica_timeout_in_seconds = 300
+  replica_retry_limit        = 0
+
+  manual_trigger_config {
+    parallelism              = 1
+    replica_completion_count = 1
+  }
+
+  identity {
+    identity_ids = [
+      azurerm_user_assigned_identity.azure_devops.id,
+    ]
+    type = "UserAssigned"
+  }
+
+  secret {
+    identity            = azurerm_user_assigned_identity.azure_devops.id
+    key_vault_secret_id = data.azurerm_key_vault_secret.azure_devops_access_token.id
+    name                = var.azure_devops_keyvault_access_token_secret_name
+  }
+
+  secret {
+    identity            = azurerm_user_assigned_identity.azure_devops.id
+    key_vault_secret_id = data.azurerm_key_vault_secret.azure_devops_organisation_url.id
+    name                = var.azure_devops_keyvault_organisation_url_secret_name
+  }
+
+  # Probes are currently not supported, as no endpoints are exposed
+  # https://github.com/microsoft/azure-pipelines-agent/issues/3478
+  template {
+    container {
+      image = var.azure_devops_pipelines_agent_image
+      name  = "azure-devops-agent-init"
+
+      cpu    = 2
+      memory = "4Gi"
+
+      env {
+        name  = "AZURE_DEVOPS_AGENT_POOL"
+        value = var.azure_devops_pipelines_agent_pool
+      }
+
+      env {
+        name  = "AZURE_DEVOPS_AGENT_POOL_PLACEHOLDER_MODE"
+        value = "true"
+      }
+
+      env {
+        name        = "AZURE_DEVOPS_TOKEN"
+        secret_name = var.azure_devops_keyvault_access_token_secret_name
+      }
+
+      env {
+        name        = "AZURE_DEVOPS_URL"
+        secret_name = var.azure_devops_keyvault_organisation_url_secret_name
+      }
+    }
+  }
+}
+
+resource "azurerm_container_app_job" "azure_pipelines_agent" {
+  name                         = var.azure_devops_container_app_azure_pipelines_agent_name
+  location                     = azurerm_resource_group.azure_devops.location
+  resource_group_name          = azurerm_resource_group.azure_devops.name
+  container_app_environment_id = azurerm_container_app_environment.azure_devops.id
+
+  replica_timeout_in_seconds = 7200
+  replica_retry_limit        = 0
+
+  event_trigger_config {
+    scale {
+      max_executions              = 3
+      min_executions              = 0
+      polling_interval_in_seconds = 30
+
+      rules {
+        custom_rule_type = "azure-pipelines"
+        metadata = {
+          poolName                   = var.azure_devops_pipelines_agent_pool
+          targetPipelinesQueueLength = 1
+        }
+        name = "azure-pipelines-job-queue-length"
+
+        authentication {
+          secret_name       = var.azure_devops_keyvault_access_token_secret_name
+          trigger_parameter = "personalAccessToken"
+        }
+
+        authentication {
+          secret_name       = var.azure_devops_keyvault_organisation_url_secret_name
+          trigger_parameter = "organizationURL"
+        }
+      }
+    }
+  }
+
+  identity {
+    identity_ids = [
+      azurerm_user_assigned_identity.azure_devops.id,
+    ]
+    type = "UserAssigned"
+  }
+
+  secret {
+    identity            = azurerm_user_assigned_identity.azure_devops.id
+    key_vault_secret_id = data.azurerm_key_vault_secret.azure_devops_access_token.id
+    name                = var.azure_devops_keyvault_access_token_secret_name
+  }
+
+  secret {
+    identity            = azurerm_user_assigned_identity.azure_devops.id
+    key_vault_secret_id = data.azurerm_key_vault_secret.azure_devops_organisation_url.id
+    name                = var.azure_devops_keyvault_organisation_url_secret_name
+  }
+
+  # Probes are currently not supported, as no endpoints are exposed
+  # https://github.com/microsoft/azure-pipelines-agent/issues/3478
+  template {
+    container {
+      image = var.azure_devops_pipelines_agent_image
+      name  = "azure-devops-agent"
+
+      cpu    = 2
+      memory = "4Gi"
+
+      env {
+        name  = "AZURE_DEVOPS_AGENT_POOL"
+        value = var.azure_devops_pipelines_agent_pool
+      }
+
+      env {
+        name        = "AZURE_DEVOPS_TOKEN"
+        secret_name = var.azure_devops_keyvault_access_token_secret_name
+      }
+
+      env {
+        name        = "AZURE_DEVOPS_URL"
+        secret_name = var.azure_devops_keyvault_organisation_url_secret_name
+      }
+    }
+  }
+}
+```
+
+Once deployed, go to the Azure Portal, open the Container App Job named `caj-azure-pipelines-agent-init` and run it manually. The agent pool in Azure DevOps should then show at least one (disconnected) agent within it and the pool will be ready to use.
 
 <a name="please-contribute"></a>
 
