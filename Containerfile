@@ -1,7 +1,7 @@
 FROM quay.io/podman/stable:v5.6
 
 LABEL authors="Paul Podgorsek"
-LABEL description="An agent for Azure Pipelines, with git, Java, Maven, .Net, Podman (Docker) and Python 3 enabled."
+LABEL description="An agent for Azure Pipelines, with Ansible, git, Java, Maven, .Net, Podman (Docker) + Buildah and Python 3 enabled."
 
 ENV AGENT_USER_NAME="podman"
 ENV AGENT_WORK_DIR="/opt/pipeline-agent"
@@ -11,10 +11,14 @@ ENV AZURE_DEVOPS_AGENT_POOL="Default"
 ENV AZURE_DEVOPS_AGENT_NAME=""
 ENV AZURE_DEVOPS_AGENT_VERSION="4.264.2"
 
+ENV ANSIBLE_COLLECTION_AWS_VERSION="10.1.2"
+ENV ANSIBLE_COLLECTION_AZURE_VERSION="v3.11.0"
+ENV ANSIBLE_COLLECTION_GCP_VERSION="v1.10.2"
 ENV DOTNET_VERSION="10.0"
 ENV JAVA_VERSION="21"
 
 # Agent capabilities
+ENV ansible="enabled"
 ENV docker="enabled"
 ENV dotnet="enabled"
 ENV git="enabled"
@@ -25,18 +29,23 @@ ENV maven="enabled"
 RUN dnf upgrade -y > /dev/null \
   && dnf install -y \
     --exclude container-selinux \
+    automake \
     buildah \
     # Install dependencies for cryptography due to https://github.com/pyca/cryptography/issues/5771
     cargo \
     curl \
     dotnet-sdk-${DOTNET_VERSION} \
     gcc \
+    gcc-c++ \
     git \
     java-${JAVA_VERSION}-openjdk \
     make \
     maven \
+    openssl \
+    openssl-devel \
     podman-docker \
     python3 \
+    python3-devel \
     python3-pip \
     rust \
     unzip \
@@ -46,24 +55,14 @@ RUN dnf upgrade -y > /dev/null \
   && dnf clean all \
   && rm -rf /var/cache /var/log/dnf* /var/log/yum.*
 
-ADD https://raw.githubusercontent.com/containers/image_build/main/podman/containers.conf /etc/containers/containers.conf
-ADD https://raw.githubusercontent.com/containers/image_build/main/podman/podman-containers.conf /home/${AGENT_USER_NAME}/.config/containers/containers.conf
-
 # Create directories for the agent files
 RUN mkdir ${AGENT_WORK_DIR} \
+  && chown -R ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR} \
   \
   # Download and unpack tarball
   && curl -L https://download.agent.dev.azure.com/agent/${AZURE_DEVOPS_AGENT_VERSION}/vsts-agent-${AGENT_PLATFORM:-linux-x64}-${AZURE_DEVOPS_AGENT_VERSION}.tar.gz -o /tmp/agent.tar.gz \
   && tar zxf /tmp/agent.tar.gz -C ${AGENT_WORK_DIR} \
-  && rm -f /tmp/agent.tar.gz \
-  \
-  && chmod 644 /etc/containers/containers.conf \
-  && chmod 644 /home/${AGENT_USER_NAME}/.config/containers/containers.conf \
-  && chown -R ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR} \
-  && chown -R ${AGENT_USER_NAME}:${AGENT_USER_NAME} /home/${AGENT_USER_NAME}
-
-VOLUME /var/lib/containers
-VOLUME /home/${AGENT_USER_NAME}/.local/share/containers
+  && rm -f /tmp/agent.tar.gz
 
 WORKDIR ${AGENT_WORK_DIR}
 
@@ -74,6 +73,15 @@ COPY scripts/configure-and-run-agent.sh ${AGENT_WORK_DIR}/configure-and-run-agen
 
 # Grant the correct permissions
 RUN chown ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR}/configure-and-run-agent.sh
+
+# Install the latest version of Ansible, along with the collections for major cloud providers
+RUN pip3 install ansible-core --upgrade \
+  && pip3 install cryptography \
+  && pip3 install -r https://raw.githubusercontent.com/ansible-collections/amazon.aws/${ANSIBLE_COLLECTION_AWS_VERSION}/requirements.txt \
+  # azure-iot-hub relies on the outdated uamqp library, which doesn't work with recent Python versions
+  && curl https://raw.githubusercontent.com/ansible-collections/azure/${ANSIBLE_COLLECTION_AZURE_VERSION}/requirements.txt | grep -ivE "azure-iot-hub|azure-mgmt-iothub" > azure-requirements.txt \
+  && pip3 install -r azure-requirements.txt \
+  && pip3 install -r https://raw.githubusercontent.com/ansible-collections/google.cloud/${ANSIBLE_COLLECTION_GCP_VERSION}/requirements.txt
 
 USER ${AGENT_USER_NAME}
 
