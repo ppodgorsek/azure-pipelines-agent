@@ -31,6 +31,7 @@ This image contains:
 * Podman (with an alias for `docker`) + Buildah
 * Python 3
 * Rust
+* Terraform
 
 Running Podman inside a container is based on RedHat's [excellent article](https://www.redhat.com/en/blog/podman-inside-container), the official [Podman tutorial for rootless executions](https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md) and [Podman's official container image](https://quay.io/repository/podman/stable?tab=info).
 
