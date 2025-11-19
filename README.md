@@ -194,7 +194,7 @@ resource "azurerm_container_app_job" "azure_pipelines_agent_placeholder" {
       }
 
       env {
-        name  = "AZURE_DEVOPS_AGENT_POOL_PLACEHOLDER_MODE"
+        name  = "AZURE_DEVOPS_AGENT_PLACEHOLDER_MODE"
         value = "true"
       }
 
