@@ -82,8 +82,8 @@ COPY scripts/configure-and-run-agent.sh ${AGENT_WORK_DIR}/configure-and-run-agen
 RUN chown ${AGENT_USER_NAME}:${AGENT_USER_NAME} ${AGENT_WORK_DIR}/configure-and-run-agent.sh
 
 # Install the latest version of Ansible, along with the collections for major cloud providers
-RUN pip3 install ansible-core --upgrade \
-  && pip3 install cryptography \
+RUN pip3 install ansible --upgrade \
+  && pip3 install cryptography --upgrade \
   && pip3 install -r https://raw.githubusercontent.com/ansible-collections/amazon.aws/${ANSIBLE_COLLECTION_AWS_VERSION}/requirements.txt \
   # azure-iot-hub relies on the outdated uamqp library, which doesn't work with recent Python versions
   && curl https://raw.githubusercontent.com/ansible-collections/azure/${ANSIBLE_COLLECTION_AZURE_VERSION}/requirements.txt | grep -ivE "azure-iot-hub|azure-mgmt-iothub" > azure-requirements.txt \
