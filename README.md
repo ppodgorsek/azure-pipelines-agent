@@ -8,6 +8,7 @@
     * [Changing the name of the agent pool](#changing-agent-pool-name)
     * [Initialising a self-hosted agent pool via the placeholder mode](#placeholder-mode)
     * [Overriding the agent name](#overriding-agent-name)
+    * [Running Ansible](#running-ansible)
 * [Running the image on different platforms](#platforms)
     * [Azure Container Apps](#platform-azure-container-apps)
 * [Please contribute!](#please-contribute)
@@ -127,6 +128,22 @@ docker run --rm \
     -e AZURE_DEVOPS_TOKEN="CHANGEME" \
     -e AZURE_DEVOPS_URL="CHANGEME" \
     docker.io/ppodgorsek/azure-pipelines-agent:<version>
+```
+
+<a name="running-ansible"></a>
+
+### Running Ansible
+
+When running Ansible in your build pipeline, remember to install the relevant Ansible collections, for example:
+
+```yml
+- script: |
+  cd $(Pipeline.Workspace)/$(INFRASTRUCTURE_AS_CODE_PATH)/
+
+  ansible-galaxy install -r collections/requirements.yml
+
+  ansible-playbook CHANGEME-playbook.yml -i inventories/CHANGEME/hosts
+displayName: Ansible
 ```
 
 <a name="platforms"></a>
